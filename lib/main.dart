@@ -8,6 +8,7 @@ import 'package:percent_indicator/percent_indicator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_counter_app/utilities/theme_list.dart';
+import 'package:intl/intl.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -215,11 +216,16 @@ class DataHandler {
   static int counter = DataSaver.loadData('counter') ?? 0;
   static int _dropdownValue = 1;
   static int _dropdownValue2 = 0;
-  static String dropdownValue3 = DataSaver.loadStringData('reminder') ?? 'none';
+  static String dropdownValue3 =
+      DataSaver.loadStringData('autoReset') ?? 'none';
   static int goal = DataSaver.loadData('goal') ?? 100;
   static int selectedTheme = DataSaver.loadData('theme') ?? 0;
   static TextEditingController newgoal = TextEditingController();
   static bool disableGoal = false;
+  static DateFormat formatter = DateFormat("dd-MM-yyyy");
+  static DateTime currentDate = DateTime.parse(
+      DataSaver.loadStringData('currentDate') ??
+          DateTime.now().toIso8601String());
 
   static int get dropdownValue2 {
     return _dropdownValue2;
@@ -233,11 +239,14 @@ class DataHandler {
     counter = DataSaver.loadData('counter') ?? 0;
     _dropdownValue = 1;
     _dropdownValue2 = DataSaver.loadData('theme') ?? 0;
-    dropdownValue3 = DataSaver.loadStringData('reminder') ?? 'none';
+    dropdownValue3 = DataSaver.loadStringData('autoReset') ?? 'none';
     goal = DataSaver.loadData('goal') ?? 100;
     selectedTheme = DataSaver.loadData('theme') ?? 0;
     newgoal = TextEditingController();
     disableGoal = DataSaver.loadBoolData('disableGoal') ?? false;
+    currentDate = DateTime.parse(DataSaver.loadStringData('currentDate') ??
+        DateTime.now().toIso8601String());
+    ;
   }
 }
 
@@ -258,24 +267,29 @@ class DataSaver {
 
 void counterResetter() {
   if (DataHandler.dropdownValue3 == 'day') {
-    if (DateTime.now().day != DataSaver.loadData('currentDay')) {
+    if (DataHandler.formatter.format(DataHandler.currentDate) !=
+        DataHandler.formatter.format(DateTime.now())) {
       DataHandler.counter = 0;
       DataSaver.saveData('counter', 0);
-      DataSaver.saveData('currentDay', DateTime.now().day);
+      DataSaver.saveStringData('currentDate', DateTime.now().toIso8601String());
     }
   } else if (DataHandler.dropdownValue3 == 'week') {
-    if (DateTime.now().weekday == DateTime.monday &&
-        DateTime.now().day != DataSaver.loadData('currentDay')) {
+    if (DataHandler.formatter.format(DataHandler.currentDate
+            .subtract(Duration(days: DataHandler.currentDate.weekday))) !=
+        DataHandler.formatter.format(
+            DateTime.now().subtract(Duration(days: DateTime.now().weekday)))) {
       DataHandler.counter = 0;
       DataSaver.saveData('counter', 0);
-      DataSaver.saveData('currentDay', DateTime.now().day);
+      DataSaver.saveStringData('currentDate', DateTime.now().toIso8601String());
     }
   } else if (DataHandler.dropdownValue3 == 'month') {
-    if (DateTime.now().day == 1 &&
-        DateTime.now().day != DataSaver.loadData('currentDay')) {
+    if (DataHandler.formatter.format(DataHandler.currentDate
+            .subtract(Duration(days: DataHandler.currentDate.day))) !=
+        DataHandler.formatter.format(
+            DateTime.now().subtract(Duration(days: DateTime.now().day)))) {
       DataHandler.counter = 0;
       DataSaver.saveData('counter', 0);
-      DataSaver.saveData('currentDay', DateTime.now().day);
+      DataSaver.saveStringData('currentDate', DateTime.now().toIso8601String());
     }
   }
 }

@@ -98,7 +98,7 @@ class _SettingsMenuState extends State<SettingsMenu> {
           SizedBox(height: 125),
           Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             Text(
-              'Reminder:',
+              'Auto reset:',
               style: settingsTextStyle,
             ),
             SizedBox(width: 20),
@@ -126,7 +126,10 @@ class _SettingsMenuState extends State<SettingsMenu> {
                       DataHandler.dropdownValue3 = selectedValue;
                     }
                     DataSaver.saveStringData(
-                        'reminder', DataHandler.dropdownValue3);
+                        'autoReset', DataHandler.dropdownValue3);
+                    DataHandler.currentDate = DateTime.now();
+                    DataSaver.saveStringData(
+                        'currentDate', DateTime.now().toIso8601String());
                   });
                 }))
           ]),
