@@ -5,6 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_counter_app/utilities/theme_list.dart';
 
 import '../main.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 class SettingsMenu extends StatefulWidget {
   const SettingsMenu({super.key, required this.updater});
@@ -95,7 +98,59 @@ class _SettingsMenuState extends State<SettingsMenu> {
               )
             ],
           ),
-          SizedBox(height: 125),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Daily reminders:', style: settingsTextStyle),
+              Padding(
+                padding: const EdgeInsets.only(top: 2.0),
+                child: Theme(
+                  data: ThemeData(
+                      unselectedWidgetColor:
+                          ColorTheme.themeList[DataHandler.selectedTheme][1]),
+                  child: Checkbox(
+                      value: DataHandler.dailyReminders,
+                      activeColor:
+                          ColorTheme.themeList[DataHandler.selectedTheme][1],
+                      checkColor:
+                          ColorTheme.themeList[DataHandler.selectedTheme][2],
+                      onChanged: (value) {
+                        setState(() {
+                          if (value is bool) {
+                            DataHandler.dailyReminders = value;
+                            DataSaver.saveBoolData(
+                                'dailyreminders', DataHandler.dailyReminders);
+                          }
+                        });
+                        setState(() async {
+                          if (value == true) {
+                            await NotificationApi
+                                .flutterLocalNotificationsPlugin
+                                .zonedSchedule(
+                                    0,
+                                    'scheduled title',
+                                    'scheduled body',
+                                    NotificationApi.nextInstanceOfTenAM(),
+                                    const NotificationDetails(
+                                        android: AndroidNotificationDetails(
+                                            'your channel id',
+                                            'your channel name',
+                                            channelDescription:
+                                                'your channel description')),
+                                    uiLocalNotificationDateInterpretation:
+                                        UILocalNotificationDateInterpretation
+                                            .absoluteTime,
+                                    androidAllowWhileIdle: true,
+                                    matchDateTimeComponents:
+                                        DateTimeComponents.dateAndTime);
+                          }
+                        });
+                      }),
+                ),
+              )
+            ],
+          ),
+          SizedBox(height: 90),
           Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             Text(
               'Auto reset:',

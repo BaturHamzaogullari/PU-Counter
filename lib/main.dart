@@ -9,11 +9,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_counter_app/utilities/theme_list.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  tz.initializeTimeZones();
   await DataSaver.init();
+
+  await NotificationApi.flutterLocalNotificationsPlugin
+      .initialize(NotificationApi.initializationSettings);
 
   runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: MyApp()));
 }
@@ -222,6 +229,7 @@ class DataHandler {
   static int selectedTheme = DataSaver.loadData('theme') ?? 0;
   static TextEditingController newgoal = TextEditingController();
   static bool disableGoal = false;
+  static bool dailyReminders = false;
   static DateFormat formatter = DateFormat("dd-MM-yyyy");
   static DateTime currentDate = DateTime.parse(
       DataSaver.loadStringData('currentDate') ??
@@ -244,6 +252,7 @@ class DataHandler {
     selectedTheme = DataSaver.loadData('theme') ?? 0;
     newgoal = TextEditingController();
     disableGoal = DataSaver.loadBoolData('disableGoal') ?? false;
+    dailyReminders = DataSaver.loadBoolData('dailyreminders') ?? false;
     currentDate = DateTime.parse(DataSaver.loadStringData('currentDate') ??
         DateTime.now().toIso8601String());
     ;
@@ -291,5 +300,24 @@ void counterResetter() {
       DataSaver.saveData('counter', 0);
       DataSaver.saveStringData('currentDate', DateTime.now().toIso8601String());
     }
+  }
+}
+
+class NotificationApi {
+  static FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+  static const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+  static final InitializationSettings initializationSettings =
+      InitializationSettings(android: initializationSettingsAndroid);
+
+  static tz.TZDateTime nextInstanceOfTenAM() {
+    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    tz.TZDateTime scheduledDate =
+        tz.TZDateTime(tz.local, now.year, now.month, now.day, 10);
+    if (scheduledDate.isBefore(now)) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    }
+    return scheduledDate;
   }
 }
