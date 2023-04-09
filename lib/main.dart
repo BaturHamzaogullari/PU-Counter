@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_counter_app/utilities/increase_selec_text.dart';
 import 'package:flutter_counter_app/utilities/settings_menu.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +13,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'dart:developer';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -94,11 +96,19 @@ class _MyAppState extends State<MyApp> {
                       IconButton(
                           iconSize: 40,
                           onPressed: () {
-                            setState(() {
-                              DataHandler.counter = 0;
-                              DataSaver.saveData(
-                                  'counter', DataHandler.counter);
-                            });
+                            if (DataHandler.CounterController.page == 0.0) {
+                              setState(() {
+                                DataHandler.counter = 0;
+                                DataSaver.saveData(
+                                    'counter', DataHandler.counter);
+                              });
+                            } else {
+                              setState(() {
+                                DataHandler.counter2 = 0;
+                                DataSaver.saveData(
+                                    'counter2', DataHandler.counter2);
+                              });
+                            }
                           },
                           icon: Icon(
                             Icons.refresh,
@@ -113,39 +123,107 @@ class _MyAppState extends State<MyApp> {
                 // circular progress idicator, current number and goal at the center of the page
                 //
                 //
-                SizedBox(height: 150),
-                CircularPercentIndicator(
-                    radius: 100,
-                    lineWidth: 12,
-                    circularStrokeCap: CircularStrokeCap.round,
-                    animation: true,
-                    animateFromLastPercent: true,
-                    backgroundColor:
-                        ColorTheme.themeList[DataHandler.selectedTheme][1],
-                    progressColor:
-                        ColorTheme.themeList[DataHandler.selectedTheme][2],
-                    percent: DataHandler.disableGoal
-                        ? 1
-                        : (DataHandler.counter / DataHandler.goal),
-                    center: Text(
-                      DataHandler.counter.toString(),
-                      style: TextStyle(
-                          fontSize: 50,
-                          color: ColorTheme.themeList[DataHandler.selectedTheme]
-                              [2]),
-                    )),
-                SizedBox(height: 35),
-                Visibility(
-                  visible: !DataHandler.disableGoal,
-                  maintainSize: true,
-                  maintainAnimation: true,
-                  maintainState: true,
-                  child: Text('Goal: ${DataHandler.goal}',
-                      style: TextStyle(
-                          fontSize: 20,
-                          color: ColorTheme.themeList[DataHandler.selectedTheme]
-                              [1])),
-                ),
+                SizedBox(height: 100),
+                Container(
+                    height: 350,
+                    child: PageView(
+                        controller: DataHandler.CounterController,
+                        children: [
+                          Column(children: [
+                            Padding(
+                              padding:
+                                  const EdgeInsets.only(right: 210, bottom: 30),
+                              child: Text("Push up",
+                                  style: GoogleFonts.archivoNarrow(
+                                      textStyle: TextStyle(
+                                          fontSize: 40,
+                                          color: ColorTheme.themeList[
+                                              DataHandler.selectedTheme][1],
+                                          fontWeight: FontWeight.bold))),
+                            ),
+                            CircularPercentIndicator(
+                                radius: 100,
+                                lineWidth: 12,
+                                circularStrokeCap: CircularStrokeCap.round,
+                                animation: true,
+                                animateFromLastPercent: true,
+                                backgroundColor: ColorTheme
+                                    .themeList[DataHandler.selectedTheme][1],
+                                progressColor: ColorTheme
+                                    .themeList[DataHandler.selectedTheme][2],
+                                percent: DataHandler.disableGoal
+                                    ? 1
+                                    : (DataHandler.counter / DataHandler.goal),
+                                center: Text(
+                                  DataHandler.counter.toString(),
+                                  style: TextStyle(
+                                      fontSize: 50,
+                                      color: ColorTheme.themeList[
+                                          DataHandler.selectedTheme][2]),
+                                )),
+                            SizedBox(height: 35),
+                            Visibility(
+                              visible: !DataHandler.disableGoal,
+                              maintainSize: true,
+                              maintainAnimation: true,
+                              maintainState: true,
+                              child: Text('Goal: ${DataHandler.goal}',
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      color: ColorTheme.themeList[
+                                          DataHandler.selectedTheme][1])),
+                            ),
+                          ]),
+                          //
+                          // Second counter displayer + goal
+                          //
+                          Column(children: [
+                            Padding(
+                              padding:
+                                  const EdgeInsets.only(right: 230, bottom: 30),
+                              child: Text("Pull up",
+                                  style: GoogleFonts.archivoNarrow(
+                                      textStyle: TextStyle(
+                                          fontSize: 40,
+                                          color: ColorTheme.themeList[
+                                              DataHandler.selectedTheme][1],
+                                          fontWeight: FontWeight.bold))),
+                            ),
+                            CircularPercentIndicator(
+                                radius: 100,
+                                lineWidth: 12,
+                                circularStrokeCap: CircularStrokeCap.round,
+                                animation: true,
+                                animateFromLastPercent: true,
+                                backgroundColor: ColorTheme
+                                    .themeList[DataHandler.selectedTheme][1],
+                                progressColor: ColorTheme
+                                    .themeList[DataHandler.selectedTheme][2],
+                                percent: DataHandler.disableGoal2
+                                    ? 1
+                                    : (DataHandler.counter2 /
+                                        DataHandler.goal2),
+                                center: Text(
+                                  DataHandler.counter2.toString(),
+                                  style: TextStyle(
+                                      fontSize: 50,
+                                      color: ColorTheme.themeList[
+                                          DataHandler.selectedTheme][2]),
+                                )),
+                            SizedBox(height: 35),
+                            Visibility(
+                              visible: !DataHandler.disableGoal2,
+                              maintainSize: true,
+                              maintainAnimation: true,
+                              maintainState: true,
+                              child: Text('Goal: ${DataHandler.goal2}',
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      color: ColorTheme.themeList[
+                                          DataHandler.selectedTheme][1])),
+                            ),
+                          ]),
+                        ])),
 
                 //
                 //
@@ -153,7 +231,7 @@ class _MyAppState extends State<MyApp> {
                 // addin system at the bottom of the page
                 //
                 //
-                SizedBox(height: 180),
+                SizedBox(height: 150),
 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -195,19 +273,36 @@ class _MyAppState extends State<MyApp> {
                                 .themeList[DataHandler.selectedTheme][2],
                             textStyle: TextStyle(fontSize: 30)),
                         onPressed: (() async {
-                          setState(() {
-                            if (DataHandler.counter < DataHandler.goal ||
-                                DataHandler.disableGoal) {
-                              DataHandler.counter += DataHandler._dropdownValue;
-                            }
-                            if (DataHandler.counter > DataHandler.goal &&
-                                !DataHandler.disableGoal) {
-                              DataHandler.counter = DataHandler.goal;
-                            }
-                          });
+                          if (DataHandler.CounterController.page == 0.0) {
+                            setState(() {
+                              if (DataHandler.counter < DataHandler.goal ||
+                                  DataHandler.disableGoal) {
+                                DataHandler.counter +=
+                                    DataHandler._dropdownValue;
+                              }
+                              if (DataHandler.counter > DataHandler.goal &&
+                                  !DataHandler.disableGoal) {
+                                DataHandler.counter = DataHandler.goal;
+                              }
+                            });
+                          } else {
+                            setState(() {
+                              if (DataHandler.counter2 < DataHandler.goal2 ||
+                                  DataHandler.disableGoal2) {
+                                DataHandler.counter2 +=
+                                    DataHandler._dropdownValue;
+                              }
+                              if (DataHandler.counter2 > DataHandler.goal2 &&
+                                  !DataHandler.disableGoal2) {
+                                DataHandler.counter2 = DataHandler.goal2;
+                              }
+                            });
+                          }
 
                           await DataSaver.saveData(
                               'counter', DataHandler.counter);
+                          await DataSaver.saveData(
+                              'counter2', DataHandler.counter2);
                         }),
                         child: Text('+')),
                   ],
@@ -220,15 +315,19 @@ class _MyAppState extends State<MyApp> {
 }
 
 class DataHandler {
+  static PageController CounterController = PageController();
   static int counter = DataSaver.loadData('counter') ?? 0;
+  static int counter2 = DataSaver.loadData('counter2') ?? 0;
   static int _dropdownValue = 1;
   static int _dropdownValue2 = 0;
   static String dropdownValue3 =
       DataSaver.loadStringData('autoReset') ?? 'none';
   static int goal = DataSaver.loadData('goal') ?? 100;
+  static int goal2 = DataSaver.loadData('goal2') ?? 100;
   static int selectedTheme = DataSaver.loadData('theme') ?? 0;
   static TextEditingController newgoal = TextEditingController();
   static bool disableGoal = false;
+  static bool disableGoal2 = false;
   static bool dailyReminders = false;
   static DateFormat formatter = DateFormat("dd-MM-yyyy");
   static DateTime currentDate = DateTime.parse(
@@ -245,17 +344,19 @@ class DataHandler {
 
   static init() {
     counter = DataSaver.loadData('counter') ?? 0;
+    counter2 = DataSaver.loadData('counter2') ?? 0;
     _dropdownValue = 1;
     _dropdownValue2 = DataSaver.loadData('theme') ?? 0;
     dropdownValue3 = DataSaver.loadStringData('autoReset') ?? 'none';
     goal = DataSaver.loadData('goal') ?? 100;
+    goal2 = DataSaver.loadData('goal2') ?? 100;
     selectedTheme = DataSaver.loadData('theme') ?? 0;
     newgoal = TextEditingController();
     disableGoal = DataSaver.loadBoolData('disableGoal') ?? false;
+    disableGoal2 = DataSaver.loadBoolData('disableGoal2') ?? false;
     dailyReminders = DataSaver.loadBoolData('dailyreminders') ?? false;
     currentDate = DateTime.parse(DataSaver.loadStringData('currentDate') ??
         DateTime.now().toIso8601String());
-    ;
   }
 }
 
@@ -280,6 +381,8 @@ void counterResetter() {
         DataHandler.formatter.format(DateTime.now())) {
       DataHandler.counter = 0;
       DataSaver.saveData('counter', 0);
+      DataHandler.counter2 = 0;
+      DataSaver.saveData('counter2', 0);
       DataSaver.saveStringData('currentDate', DateTime.now().toIso8601String());
     }
   } else if (DataHandler.dropdownValue3 == 'week') {
@@ -289,6 +392,8 @@ void counterResetter() {
             DateTime.now().subtract(Duration(days: DateTime.now().weekday)))) {
       DataHandler.counter = 0;
       DataSaver.saveData('counter', 0);
+      DataHandler.counter2 = 0;
+      DataSaver.saveData('counter2', 0);
       DataSaver.saveStringData('currentDate', DateTime.now().toIso8601String());
     }
   } else if (DataHandler.dropdownValue3 == 'month') {
@@ -298,6 +403,8 @@ void counterResetter() {
             DateTime.now().subtract(Duration(days: DateTime.now().day)))) {
       DataHandler.counter = 0;
       DataSaver.saveData('counter', 0);
+      DataHandler.counter2 = 0;
+      DataSaver.saveData('counter2', 0);
       DataSaver.saveStringData('currentDate', DateTime.now().toIso8601String());
     }
   }

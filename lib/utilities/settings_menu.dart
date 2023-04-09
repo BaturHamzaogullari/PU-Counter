@@ -54,7 +54,9 @@ class _SettingsMenuState extends State<SettingsMenu> {
                       textAlign: TextAlign.center,
                       style: settingsTextStyle,
                       decoration: InputDecoration(
-                          hintText: DataHandler.goal.toString(),
+                          hintText: DataHandler.CounterController.page == 0.0
+                              ? DataHandler.goal.toString()
+                              : DataHandler.goal2.toString(),
                           hintStyle: settingsTextStyle)),
                 ),
               )
@@ -74,22 +76,39 @@ class _SettingsMenuState extends State<SettingsMenu> {
                       unselectedWidgetColor:
                           ColorTheme.themeList[DataHandler.selectedTheme][1]),
                   child: Checkbox(
-                      value: DataHandler.disableGoal,
+                      value: DataHandler.CounterController.page == 0.0
+                          ? DataHandler.disableGoal
+                          : DataHandler.disableGoal2,
                       activeColor:
                           ColorTheme.themeList[DataHandler.selectedTheme][1],
                       checkColor:
                           ColorTheme.themeList[DataHandler.selectedTheme][2],
                       onChanged: (value) {
                         setState(() {
-                          if (value is bool) {
-                            DataHandler.disableGoal = value;
-                            DataSaver.saveBoolData(
-                                'disableGoal', DataHandler.disableGoal);
-                          }
-                          if (DataHandler.disableGoal == false &&
-                              DataHandler.counter > DataHandler.goal) {
-                            DataHandler.counter = DataHandler.goal;
-                            DataSaver.saveData('counter', DataHandler.counter);
+                          if (DataHandler.CounterController.page == 0.0) {
+                            if (value is bool) {
+                              DataHandler.disableGoal = value;
+                              DataSaver.saveBoolData(
+                                  'disableGoal', DataHandler.disableGoal);
+                            }
+                            if (DataHandler.disableGoal == false &&
+                                DataHandler.counter > DataHandler.goal) {
+                              DataHandler.counter = DataHandler.goal;
+                              DataSaver.saveData(
+                                  'counter', DataHandler.counter);
+                            }
+                          } else {
+                            if (value is bool) {
+                              DataHandler.disableGoal2 = value;
+                              DataSaver.saveBoolData(
+                                  'disableGoal2', DataHandler.disableGoal2);
+                            }
+                            if (DataHandler.disableGoal2 == false &&
+                                DataHandler.counter2 > DataHandler.goal2) {
+                              DataHandler.counter2 = DataHandler.goal2;
+                              DataSaver.saveData(
+                                  'counter2', DataHandler.counter2);
+                            }
                           }
                           widget.updater();
                         });
@@ -229,13 +248,25 @@ class _SettingsMenuState extends State<SettingsMenu> {
             onPressed: (() {
               setState(() {
                 if (DataHandler.newgoal.text.isNotEmpty) {
-                  if (int.parse(DataHandler.newgoal.text) <
-                      DataHandler.counter) {
-                    DataHandler.counter = int.parse(DataHandler.newgoal.text);
-                    DataSaver.saveData('counter', DataHandler.counter);
+                  if (DataHandler.CounterController.page == 0.0) {
+                    if (int.parse(DataHandler.newgoal.text) <
+                        DataHandler.counter) {
+                      DataHandler.counter = int.parse(DataHandler.newgoal.text);
+                      DataSaver.saveData('counter', DataHandler.counter);
+                    }
+                    DataHandler.goal = int.parse(DataHandler.newgoal.text);
+                    DataSaver.saveData('goal', DataHandler.goal);
+                  } else {
+                    if (int.parse(DataHandler.newgoal.text) <
+                        DataHandler.counter2) {
+                      DataHandler.counter2 =
+                          int.parse(DataHandler.newgoal.text);
+                      DataSaver.saveData('counter2', DataHandler.counter2);
+                    }
+                    DataHandler.goal2 = int.parse(DataHandler.newgoal.text);
+                    DataSaver.saveData('goal2', DataHandler.goal2);
                   }
-                  DataHandler.goal = int.parse(DataHandler.newgoal.text);
-                  DataSaver.saveData('goal', DataHandler.goal);
+
                   DataHandler.newgoal.clear();
                   DataHandler.disableGoal = false;
                   DataSaver.saveBoolData('disableGoal', false);
