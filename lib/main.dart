@@ -1,9 +1,12 @@
 // ignore_for_file: prefer_const_constructors
 // ignore_for_file: prefer_const_literals_to_create_immutables
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_counter_app/utilities/increase_selec_text.dart';
 import 'package:flutter_counter_app/utilities/settings_menu.dart';
+import 'package:flutter_counter_app/utilities/workout_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,13 +20,15 @@ import 'package:timezone/timezone.dart' as tz;
 import 'dart:developer';
 import 'package:expandable_bottom_sheet/expandable_bottom_sheet.dart';
 import 'package:flutter_heatmap_calendar/flutter_heatmap_calendar.dart';
-import 'package:flutter_counter_app/utilities/Workout_storage.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   tz.initializeTimeZones();
   await DataSaver.init();
+  /*DataHandler.push_up_saves = (await WorkoutStorage.loadWorkout())
+      ?.map((key, value) => MapEntry(DateTime.parse(key), value));*/
+  DataHandler.push_up_saves = await WorkoutStorage.loadWorkout();
 
   await NotificationApi.flutterLocalNotificationsPlugin
       .initialize(NotificationApi.initializationSettings);
