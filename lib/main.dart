@@ -11,9 +11,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_counter_app/utilities/theme_list.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'dart:developer';
+import 'package:expandable_bottom_sheet/expandable_bottom_sheet.dart';
+import 'package:flutter_heatmap_calendar/flutter_heatmap_calendar.dart';
+import 'package:flutter_counter_app/utilities/Workout_storage.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +39,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  GlobalKey<ExpandableBottomSheetState> key = new GlobalKey();
   @override
   void initState() {
     super.initState();
@@ -61,73 +66,118 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      body: Container(
-          color: ColorTheme.themeList[DataHandler.selectedTheme][0],
-          child: Padding(
-            padding: const EdgeInsets.only(top: 50.0),
-            child: Column(
-              children: [
-                //
-                //
-                // Settings (button and menu) and reset button at the the top of the page
-                //
-                //
+      body: SlidingUpPanel(
+        minHeight: 20,
+        maxHeight: 420,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        color: ColorTheme.themeList[DataHandler.selectedTheme][0],
+        backdropEnabled: true,
+        panel: Column(
+          children: [
+            SizedBox(
+              height: 9,
+            ),
+            Container(
+                height: 5,
+                width: 100,
+                decoration: BoxDecoration(
+                    color: Colors.grey,
+                    borderRadius: BorderRadius.all(Radius.circular(20)))),
+            SizedBox(height: 20),
+            Text(
+                "Your did 330 " +
+                    (DataHandler.currentpage == 0 ? "push up" : "pull up"),
+                style: GoogleFonts.archivoNarrow(
+                    textStyle: TextStyle(
+                        fontSize: 20,
+                        color: ColorTheme.themeList[DataHandler.selectedTheme]
+                            [1],
+                        fontWeight: FontWeight.bold))),
+            SizedBox(height: 10),
+            HeatMapCalendar(
+              showColorTip: false,
+              monthTextColor: ColorTheme.themeList[DataHandler.selectedTheme]
+                  [1],
+              weekTextColor: ColorTheme.themeList[DataHandler.selectedTheme][1],
+              colorsets: const {
+                1: Colors.lime,
+                2: Colors.lightGreen,
+                3: Colors.green
+              },
+              datasets: DataHandler.currentpage == 0
+                  ? DataHandler.push_up_saves
+                  : DataHandler.pull_up_saves,
+            )
+          ],
+        ),
+        body: Container(
+            color: ColorTheme.themeList[DataHandler.selectedTheme][0],
+            child: Padding(
+              padding: const EdgeInsets.only(top: 50.0),
+              child: Column(
+                children: [
+                  //
+                  //
+                  // Settings (button and menu) and reset button at the the top of the page
+                  //
+                  //
 
-                Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                          iconSize: 40,
-                          onPressed: (() {
-                            showDialog(
-                                context: context,
-                                builder: (_) => AlertDialog(
-                                    insetPadding:
-                                        EdgeInsets.symmetric(horizontal: 25),
-                                    backgroundColor:
-                                        Color.fromARGB(0, 35, 35, 35),
-                                    content: SettingsMenu(
-                                      updater: updateSettings,
-                                    )));
-                          }),
-                          icon: Icon(Icons.settings,
+                  Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                            iconSize: 40,
+                            onPressed: (() {
+                              showDialog(
+                                  context: context,
+                                  builder: (_) => AlertDialog(
+                                      insetPadding:
+                                          EdgeInsets.symmetric(horizontal: 25),
+                                      backgroundColor:
+                                          Color.fromARGB(0, 35, 35, 35),
+                                      content: SettingsMenu(
+                                        updater: updateSettings,
+                                      )));
+                            }),
+                            icon: Icon(Icons.settings,
+                                color: ColorTheme
+                                    .themeList[DataHandler.selectedTheme][1])),
+                        IconButton(
+                            iconSize: 40,
+                            onPressed: () {
+                              if (DataHandler.CounterController.page == 0.0) {
+                                setState(() {
+                                  DataHandler.counter = 0;
+                                  DataSaver.saveData(
+                                      'counter', DataHandler.counter);
+                                });
+                              } else {
+                                setState(() {
+                                  DataHandler.counter2 = 0;
+                                  DataSaver.saveData(
+                                      'counter2', DataHandler.counter2);
+                                });
+                              }
+                            },
+                            icon: Icon(
+                              Icons.refresh,
                               color: ColorTheme
-                                  .themeList[DataHandler.selectedTheme][1])),
-                      IconButton(
-                          iconSize: 40,
-                          onPressed: () {
-                            if (DataHandler.CounterController.page == 0.0) {
-                              setState(() {
-                                DataHandler.counter = 0;
-                                DataSaver.saveData(
-                                    'counter', DataHandler.counter);
-                              });
-                            } else {
-                              setState(() {
-                                DataHandler.counter2 = 0;
-                                DataSaver.saveData(
-                                    'counter2', DataHandler.counter2);
-                              });
-                            }
-                          },
-                          icon: Icon(
-                            Icons.refresh,
-                            color: ColorTheme
-                                .themeList[DataHandler.selectedTheme][1],
-                          )),
-                    ]), //or restart_alt],)
+                                  .themeList[DataHandler.selectedTheme][1],
+                            )),
+                      ]), //or restart_alt],)
 
-                //
-                //
-                //
-                // circular progress idicator, current number and goal at the center of the page
-                //
-                //
-                SizedBox(height: 100),
-                Container(
-                    height: 350,
-                    child: PageView(
+                  //
+                  //
+                  //
+                  // circular progress idicator, current number and goal at the center of the page
+                  //
+                  //
+                  SizedBox(height: 100),
+                  Container(
+                      height: 400,
+                      child: PageView(
                         controller: DataHandler.CounterController,
+                        physics: BouncingScrollPhysics(),
                         children: [
                           Column(children: [
                             Padding(
@@ -223,99 +273,107 @@ class _MyAppState extends State<MyApp> {
                                           DataHandler.selectedTheme][1])),
                             ),
                           ]),
-                        ])),
-
-                //
-                //
-                //
-                // addin system at the bottom of the page
-                //
-                //
-                SizedBox(height: 150),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    DropdownButton(
-                        dropdownColor:
-                            ColorTheme.themeList[DataHandler.selectedTheme][0],
-                        items: [
-                          DropdownMenuItem(
-                              value: 1,
-                              child: IncreaseSelecText(
-                                  '1', DataHandler.selectedTheme)),
-                          DropdownMenuItem(
-                              value: 5,
-                              child: IncreaseSelecText(
-                                  '5', DataHandler.selectedTheme)),
-                          DropdownMenuItem(
-                              value: 10,
-                              child: IncreaseSelecText(
-                                  '10', DataHandler.selectedTheme)),
-                          DropdownMenuItem(
-                              value: 15,
-                              child: IncreaseSelecText(
-                                  '15', DataHandler.selectedTheme)),
-                          DropdownMenuItem(
-                              value: 20,
-                              child: IncreaseSelecText(
-                                  '20', DataHandler.selectedTheme))
                         ],
-                        value: DataHandler._dropdownValue,
-                        onChanged: dropdownCallBack),
-                    SizedBox(
-                      width: 30,
-                    ),
-                    ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                            minimumSize: Size(30, 40),
-                            backgroundColor: ColorTheme
-                                .themeList[DataHandler.selectedTheme][2],
-                            textStyle: TextStyle(fontSize: 30)),
-                        onPressed: (() async {
-                          if (DataHandler.CounterController.page == 0.0) {
-                            setState(() {
-                              if (DataHandler.counter < DataHandler.goal ||
-                                  DataHandler.disableGoal) {
-                                DataHandler.counter +=
-                                    DataHandler._dropdownValue;
-                              }
-                              if (DataHandler.counter > DataHandler.goal &&
-                                  !DataHandler.disableGoal) {
-                                DataHandler.counter = DataHandler.goal;
-                              }
-                            });
-                          } else {
-                            setState(() {
-                              if (DataHandler.counter2 < DataHandler.goal2 ||
-                                  DataHandler.disableGoal2) {
-                                DataHandler.counter2 +=
-                                    DataHandler._dropdownValue;
-                              }
-                              if (DataHandler.counter2 > DataHandler.goal2 &&
-                                  !DataHandler.disableGoal2) {
-                                DataHandler.counter2 = DataHandler.goal2;
-                              }
-                            });
-                          }
+                        onPageChanged: (value) {
+                          setState(() {
+                            DataHandler.currentpage = value;
+                          });
+                        },
+                      )),
 
-                          await DataSaver.saveData(
-                              'counter', DataHandler.counter);
-                          await DataSaver.saveData(
-                              'counter2', DataHandler.counter2);
-                        }),
-                        child: Text('+')),
-                  ],
-                ),
-              ],
-            ),
-          )),
+                  //
+                  //
+                  //
+                  // addin system at the bottom of the page
+                  //
+                  //
+                  SizedBox(height: 100),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      DropdownButton(
+                          dropdownColor: ColorTheme
+                              .themeList[DataHandler.selectedTheme][0],
+                          items: [
+                            DropdownMenuItem(
+                                value: 1,
+                                child: IncreaseSelecText(
+                                    '1', DataHandler.selectedTheme)),
+                            DropdownMenuItem(
+                                value: 5,
+                                child: IncreaseSelecText(
+                                    '5', DataHandler.selectedTheme)),
+                            DropdownMenuItem(
+                                value: 10,
+                                child: IncreaseSelecText(
+                                    '10', DataHandler.selectedTheme)),
+                            DropdownMenuItem(
+                                value: 15,
+                                child: IncreaseSelecText(
+                                    '15', DataHandler.selectedTheme)),
+                            DropdownMenuItem(
+                                value: 20,
+                                child: IncreaseSelecText(
+                                    '20', DataHandler.selectedTheme))
+                          ],
+                          value: DataHandler._dropdownValue,
+                          onChanged: dropdownCallBack),
+                      SizedBox(
+                        width: 30,
+                      ),
+                      ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              minimumSize: Size(30, 40),
+                              backgroundColor: ColorTheme
+                                  .themeList[DataHandler.selectedTheme][2],
+                              textStyle: TextStyle(fontSize: 30)),
+                          onPressed: (() async {
+                            if (DataHandler.CounterController.page == 0.0) {
+                              setState(() {
+                                if (DataHandler.counter < DataHandler.goal ||
+                                    DataHandler.disableGoal) {
+                                  DataHandler.counter +=
+                                      DataHandler._dropdownValue;
+                                }
+                                if (DataHandler.counter > DataHandler.goal &&
+                                    !DataHandler.disableGoal) {
+                                  DataHandler.counter = DataHandler.goal;
+                                }
+                              });
+                            } else {
+                              setState(() {
+                                if (DataHandler.counter2 < DataHandler.goal2 ||
+                                    DataHandler.disableGoal2) {
+                                  DataHandler.counter2 +=
+                                      DataHandler._dropdownValue;
+                                }
+                                if (DataHandler.counter2 > DataHandler.goal2 &&
+                                    !DataHandler.disableGoal2) {
+                                  DataHandler.counter2 = DataHandler.goal2;
+                                }
+                              });
+                            }
+
+                            await DataSaver.saveData(
+                                'counter', DataHandler.counter);
+                            await DataSaver.saveData(
+                                'counter2', DataHandler.counter2);
+                          }),
+                          child: Text('+')),
+                    ],
+                  ),
+                ],
+              ),
+            )),
+      ),
     );
   }
 }
 
 class DataHandler {
   static PageController CounterController = PageController();
+  static int currentpage = 0;
   static int counter = DataSaver.loadData('counter') ?? 0;
   static int counter2 = DataSaver.loadData('counter2') ?? 0;
   static int _dropdownValue = 1;
@@ -333,6 +391,8 @@ class DataHandler {
   static DateTime currentDate = DateTime.parse(
       DataSaver.loadStringData('currentDate') ??
           DateTime.now().toIso8601String());
+  static Map<DateTime, int>? push_up_saves;
+  static Map<DateTime, int>? pull_up_saves;
 
   static int get dropdownValue2 {
     return _dropdownValue2;
@@ -357,6 +417,7 @@ class DataHandler {
     dailyReminders = DataSaver.loadBoolData('dailyreminders') ?? false;
     currentDate = DateTime.parse(DataSaver.loadStringData('currentDate') ??
         DateTime.now().toIso8601String());
+    currentpage = 0;
   }
 }
 
