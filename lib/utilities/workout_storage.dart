@@ -23,14 +23,16 @@ class WorkoutStorage {
     final file = await _localFile;
 
     // Write the file
-    return file.writeAsString(jsonEncode(data));
+    return file.writeAsString(
+        jsonEncode(data.map((key, value) => MapEntry(key.toString(), value))));
   }
 
   static Future<File> saveWorkout2(Map data) async {
     final file = await _localFile2;
 
     // Write the file
-    return file.writeAsString(jsonEncode(data));
+    return file.writeAsString(
+        jsonEncode(data.map((key, value) => MapEntry(key.toString(), value))));
   }
 
   /*static Future<Map?> loadWorkout() async {
@@ -62,14 +64,15 @@ class WorkoutStorage {
     }
   }
 
-  static Future<Map?> loadWorkout2() async {
+  static Future<Map<DateTime, int>?> loadWorkout2() async {
     try {
       final file = await _localFile2;
 
       // Read the file
       final contents = await file.readAsString();
 
-      return json.decode(contents);
+      Map temp = jsonDecode(contents);
+      return temp.map((key, value) => MapEntry(DateTime.parse(key), value));
     } catch (e) {
       // If encountering an error, return 0
       return null;

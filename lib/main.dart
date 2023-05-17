@@ -17,7 +17,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'dart:developer';
 import 'package:expandable_bottom_sheet/expandable_bottom_sheet.dart';
 import 'package:flutter_heatmap_calendar/flutter_heatmap_calendar.dart';
 
@@ -28,7 +27,10 @@ Future main() async {
   await DataSaver.init();
   /*DataHandler.push_up_saves = (await WorkoutStorage.loadWorkout())
       ?.map((key, value) => MapEntry(DateTime.parse(key), value));*/
-  DataHandler.push_up_saves = await WorkoutStorage.loadWorkout();
+  DataHandler.push_up_saves = await WorkoutStorage.loadWorkout() ??
+      {DateUtils.dateOnly(DateTime.now()): 0};
+  DataHandler.pull_up_saves = await WorkoutStorage.loadWorkout2() ??
+      {DateUtils.dateOnly(DateTime.now()): 0};
 
   await NotificationApi.flutterLocalNotificationsPlugin
       .initialize(NotificationApi.initializationSettings);
@@ -43,14 +45,41 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
-  GlobalKey<ExpandableBottomSheetState> key = new GlobalKey();
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  GlobalKey<ExpandableBottomSheetState> key = GlobalKey();
+
+  String totalNumber =
+      "Your did ${DataHandler.currentpage == 0 ? DataHandler.push_up_saves.values.reduce((sum, element) => sum + element) : DataHandler.pull_up_saves.values.reduce((sum, element) => sum + element)} ${DataHandler.currentpage == 0 ? "push up" : "pull up"}";
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     DataHandler.init();
     counterResetter();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached) return;
+
+    final isPaused = state == AppLifecycleState.paused;
+
+    if (isPaused) {
+      WorkoutStorage.saveWorkout(DataHandler.push_up_saves);
+      WorkoutStorage.saveWorkout2(DataHandler.pull_up_saves);
+    }
   }
 
   void dropdownCallBack(
@@ -72,7 +101,15 @@ class _MyAppState extends State<MyApp> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: SlidingUpPanel(
-        minHeight: 20,
+        onPanelSlide: (position) {
+          if (position == 0.0 || position == 1.0) {
+            setState(() {
+              totalNumber =
+                  "Your did ${DataHandler.currentpage == 0 ? DataHandler.push_up_saves.values.reduce((sum, element) => sum + element) : DataHandler.pull_up_saves.values.reduce((sum, element) => sum + element)} ${DataHandler.currentpage == 0 ? "push up" : "pull up"}";
+            });
+          }
+        },
+        minHeight: 30,
         maxHeight: 420,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         color: ColorTheme.themeList[DataHandler.selectedTheme][0],
@@ -80,7 +117,7 @@ class _MyAppState extends State<MyApp> {
         panel: Column(
           children: [
             SizedBox(
-              height: 9,
+              height: 14,
             ),
             Container(
                 height: 5,
@@ -89,9 +126,7 @@ class _MyAppState extends State<MyApp> {
                     color: Colors.grey,
                     borderRadius: BorderRadius.all(Radius.circular(20)))),
             SizedBox(height: 20),
-            Text(
-                "Your did 330 " +
-                    (DataHandler.currentpage == 0 ? "push up" : "pull up"),
+            Text(totalNumber,
                 style: GoogleFonts.archivoNarrow(
                     textStyle: TextStyle(
                         fontSize: 20,
@@ -104,14 +139,24 @@ class _MyAppState extends State<MyApp> {
               monthTextColor: ColorTheme.themeList[DataHandler.selectedTheme]
                   [1],
               weekTextColor: ColorTheme.themeList[DataHandler.selectedTheme][1],
-              colorsets: const {
-                1: Colors.lime,
-                2: Colors.lightGreen,
-                3: Colors.green
+              colorMode: ColorMode.color,
+              colorsets: {
+                25: ColorTheme.themeList[DataHandler.selectedTheme][2]
+                    .withOpacity(0.25),
+                50: ColorTheme.themeList[DataHandler.selectedTheme][2]
+                    .withOpacity(0.50),
+                75: ColorTheme.themeList[DataHandler.selectedTheme][2]
+                    .withOpacity(0.75),
+                100: ColorTheme.themeList[DataHandler.selectedTheme][2]
+                    .withOpacity(1)
               },
               datasets: DataHandler.currentpage == 0
                   ? DataHandler.push_up_saves
                   : DataHandler.pull_up_saves,
+              onClick: (p0) => setState(() {
+                totalNumber =
+                    "Your did ${DataHandler.currentpage == 0 ? (DataHandler.push_up_saves[p0] ?? 0) : (DataHandler.pull_up_saves[p0] ?? 0)} ${DataHandler.currentpage == 0 ? "push up" : "pull up"}";
+              }),
             )
           ],
         ),
@@ -148,19 +193,30 @@ class _MyAppState extends State<MyApp> {
                                 color: ColorTheme
                                     .themeList[DataHandler.selectedTheme][1])),
                         IconButton(
-                            iconSize: 40,
+                            iconSize: 45,
                             onPressed: () {
                               if (DataHandler.CounterController.page == 0.0) {
                                 setState(() {
                                   DataHandler.counter = 0;
                                   DataSaver.saveData(
                                       'counter', DataHandler.counter);
+
+                                  DataHandler.push_up_saves.update(
+                                    DateUtils.dateOnly(DateTime.now()),
+                                    (value) => 0,
+                                    ifAbsent: () => 0,
+                                  );
                                 });
                               } else {
                                 setState(() {
                                   DataHandler.counter2 = 0;
                                   DataSaver.saveData(
                                       'counter2', DataHandler.counter2);
+                                  DataHandler.pull_up_saves.update(
+                                    DateUtils.dateOnly(DateTime.now()),
+                                    (value) => 0,
+                                    ifAbsent: () => 0,
+                                  );
                                 });
                               }
                             },
@@ -179,7 +235,7 @@ class _MyAppState extends State<MyApp> {
                   //
                   SizedBox(height: 100),
                   Container(
-                      height: 400,
+                      height: 500,
                       child: PageView(
                         controller: DataHandler.CounterController,
                         physics: BouncingScrollPhysics(),
@@ -292,7 +348,6 @@ class _MyAppState extends State<MyApp> {
                   // addin system at the bottom of the page
                   //
                   //
-                  SizedBox(height: 100),
 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -340,10 +395,21 @@ class _MyAppState extends State<MyApp> {
                                     DataHandler.disableGoal) {
                                   DataHandler.counter +=
                                       DataHandler._dropdownValue;
+                                  DataHandler.push_up_saves.update(
+                                    DateUtils.dateOnly(DateTime.now()),
+                                    (value) =>
+                                        value + DataHandler._dropdownValue,
+                                    ifAbsent: () => DataHandler._dropdownValue,
+                                  );
                                 }
                                 if (DataHandler.counter > DataHandler.goal &&
                                     !DataHandler.disableGoal) {
                                   DataHandler.counter = DataHandler.goal;
+                                  DataHandler.push_up_saves.update(
+                                    DateUtils.dateOnly(DateTime.now()),
+                                    (value) => DataHandler.goal,
+                                    ifAbsent: () => DataHandler.goal,
+                                  );
                                 }
                               });
                             } else {
@@ -352,10 +418,21 @@ class _MyAppState extends State<MyApp> {
                                     DataHandler.disableGoal2) {
                                   DataHandler.counter2 +=
                                       DataHandler._dropdownValue;
+                                  DataHandler.pull_up_saves.update(
+                                    DateUtils.dateOnly(DateTime.now()),
+                                    (value) =>
+                                        value + DataHandler._dropdownValue,
+                                    ifAbsent: () => DataHandler._dropdownValue,
+                                  );
                                 }
                                 if (DataHandler.counter2 > DataHandler.goal2 &&
                                     !DataHandler.disableGoal2) {
                                   DataHandler.counter2 = DataHandler.goal2;
+                                  DataHandler.pull_up_saves.update(
+                                    DateUtils.dateOnly(DateTime.now()),
+                                    (value) => DataHandler.goal2,
+                                    ifAbsent: () => DataHandler.goal2,
+                                  );
                                 }
                               });
                             }
@@ -396,8 +473,8 @@ class DataHandler {
   static DateTime currentDate = DateTime.parse(
       DataSaver.loadStringData('currentDate') ??
           DateTime.now().toIso8601String());
-  static Map<DateTime, int>? push_up_saves;
-  static Map<DateTime, int>? pull_up_saves;
+  static Map<DateTime, int> push_up_saves = {};
+  static Map<DateTime, int> pull_up_saves = {};
 
   static int get dropdownValue2 {
     return _dropdownValue2;
