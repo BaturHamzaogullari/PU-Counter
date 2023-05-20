@@ -141,27 +141,50 @@ class _SettingsMenuState extends State<SettingsMenu> {
                                 'dailyreminders', DataHandler.dailyReminders);
                           }
                         });
-                        setState(() async {
+                        setState(() {
                           if (value == true) {
-                            await NotificationApi
-                                .flutterLocalNotificationsPlugin
+                            NotificationApi.flutterLocalNotificationsPlugin
                                 .zonedSchedule(
                                     0,
-                                    'scheduled title',
-                                    'scheduled body',
-                                    NotificationApi.nextInstanceOfTenAM(),
-                                    const NotificationDetails(
-                                        android: AndroidNotificationDetails(
-                                            'your channel id',
-                                            'your channel name',
-                                            channelDescription:
-                                                'your channel description')),
+                                    'Workout Reminder 💪',
+                                    'Don\'t forget, you have a goal to achieve!',
+                                    NotificationApi.nextInstanceOfTime(18),
+                                    NotificationApi.notiDetails,
                                     uiLocalNotificationDateInterpretation:
                                         UILocalNotificationDateInterpretation
                                             .absoluteTime,
                                     androidAllowWhileIdle: true,
                                     matchDateTimeComponents:
-                                        DateTimeComponents.dateAndTime);
+                                        DateTimeComponents.time);
+                            NotificationApi.flutterLocalNotificationsPlugin
+                                .zonedSchedule(
+                                    1,
+                                    'Workout Reminder 💪',
+                                    'Don\'t forget, you have a goal to achieve!',
+                                    NotificationApi.nextInstanceOfTime(20),
+                                    NotificationApi.notiDetails,
+                                    uiLocalNotificationDateInterpretation:
+                                        UILocalNotificationDateInterpretation
+                                            .absoluteTime,
+                                    androidAllowWhileIdle: true,
+                                    matchDateTimeComponents:
+                                        DateTimeComponents.time);
+                            NotificationApi.flutterLocalNotificationsPlugin
+                                .zonedSchedule(
+                                    2,
+                                    'Workout Reminder 💪',
+                                    'Don\'t forget, you have a goal to achieve!',
+                                    NotificationApi.nextInstanceOfTime(22),
+                                    NotificationApi.notiDetails,
+                                    uiLocalNotificationDateInterpretation:
+                                        UILocalNotificationDateInterpretation
+                                            .absoluteTime,
+                                    androidAllowWhileIdle: true,
+                                    matchDateTimeComponents:
+                                        DateTimeComponents.time);
+                          } else {
+                            NotificationApi.flutterLocalNotificationsPlugin
+                                .cancelAll();
                           }
                         });
                       }),
